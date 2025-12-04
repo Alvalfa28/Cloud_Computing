@@ -15,9 +15,9 @@ spec:
   selector:
     app: wooless
   ports:
-  - port: 80
-    name: http
-    targetPort: 80
+    - port: 80
+      name: http
+      targetPort: 80
   type: NodePort
 
 ---
@@ -32,21 +32,21 @@ spec:
       app: wooless
   strategy:
     type: RollingUpdate
-  template: #Template for container
+  template:
     metadata:
       labels:
         app: wooless
     spec:
       containers:
-      - name: wooless
-        image:  asia.gcr.io/$PROJECT_ID/production/wooless:$SHORT_SHA
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 80
-          name: wooless
-        resources:
-          requests:
-            cpu: 50m
+        - name: wooless
+          image: asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: wooless
+          resources:
+            requests:
+              cpu: 50m
 
 ---
 apiVersion: autoscaling/v1
@@ -78,13 +78,13 @@ spec:
     - host: app.wooless.com
       http:
         paths:
-        - path: /*
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: wooless
-              port: 
-                number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wooless
+                port:
+                  number: 80
 
 ---
 apiVersion: networking.gke.io/v1beta2

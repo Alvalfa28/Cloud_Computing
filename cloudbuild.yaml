@@ -1,39 +1,51 @@
 steps:
+  # === STEP 0: Build Docker Image ===
   - id: Build-docker
-    name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA', '.'] # URL BARU
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - -t
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+      - .
     timeout: 900s
 
+  # === STEP 1: Push Docker Image ===
   - id: Push-docker
-    name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA'] # URL BARU
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
     timeout: 900s
 
+  # === STEP 2: envsubst via shell ===
   - id: envSubst-for-deployment.yml
-    # Menggunakan builder standar Google Cloud untuk envsubst
-    name: 'gcr.io/cloud-builders/envsubst' 
+    name: "gcr.io/cloud-builders/gcloud"
+    entrypoint: "bash"
     env:
-      - 'SHORT_SHA=$SHORT_SHA'
-      - 'PROJECT_ID=$PROJECT_ID'
-    # Args untuk menjalankan substitusi pada file deployment.yaml
-    args: ['deployment.yaml']
+      - SHORT_SHA=$SHORT_SHA
+      - PROJECT_ID=$PROJECT_ID
+    args:
+      - "-c"
+      - |
+        echo "🔧 Rendering deployment.yaml dengan envsubst..."
+        envsubst < deployment.yaml > deployment_rendered.yaml
+        echo "✔ Selesai membuat deployment_rendered.yaml"
 
+  # === STEP 3: Deploy to GKE ===
   - id: Deploy-to-GKE
     name: "gcr.io/cloud-builders/gke-deploy"
     args:
       - run
-      - --filename=deployment.yaml
+      - --filename=deployment_rendered.yaml
       - --cluster=kelompok1-production
       - --location=asia-southeast2-a
     timeout: 900s
 
-# Konfigurasi Global
-timeout: '3600s'
+# ===== KONFIGURASI GLOBAL =====
 
-# SOLUSI UNTUK ERROR LOGGING: Menggunakan Cloud Logging saja, 
-# yang mengatasi masalah perizinan logs_bucket saat service_account kustom digunakan.
+timeout: "3600s"
+
 options:
   logging: CLOUD_LOGGING_ONLY
 
-# AKUN LAYANAN KHUSUS (Pastikan izinnya sudah lengkap!)
 service_account: "SERVICE_ACCOUNT_KAMU@kelompok1-480205.iam.gserviceaccount.com"
