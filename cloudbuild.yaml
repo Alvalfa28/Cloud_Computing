@@ -22,14 +22,22 @@ steps:
     name: "gcr.io/cloud-builders/gcloud"
     entrypoint: "bash"
     env:
-      - SHORT_SHA=$SHORT_SHA
       - PROJECT_ID=$PROJECT_ID
+      - SHORT_SHA=$SHORT_SHA
     args:
       - "-c"
       - |
-        echo "🔧 Rendering deployment.yaml dengan envsubst..."
-        envsubst < deployment.yaml > deployment_rendered.yaml
-        echo "✔ Selesai membuat deployment_rendered.yaml"
+          echo "🔍 File deployment.yaml tersedia?"
+          ls -l
+
+          echo "🔧 Sedang render deployment..."
+          envsubst < deployment.yaml > deployment_rendered.yaml
+
+          echo "📄 HASIL RENDER:"
+          echo "-----------------------------------------------"
+          cat deployment_rendered.yaml
+          echo "-----------------------------------------------"
+
 
   # === STEP 3: Deploy to GKE ===
   - id: Deploy-to-GKE
