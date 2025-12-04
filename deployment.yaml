@@ -7,52 +7,52 @@ metadata:
 apiVersion: v1
 kind: Service
 metadata:
-  name: wooless
+  name: kelompok1
   namespace: production
   labels:
-    app: wooless
+    app: kelompok1
 spec:
   selector:
-    app: wooless
+    app: kelompok1
   ports:
-  - port: 80
-    name: http
-    targetPort: 80
+    - port: 80
+      name: http
+      targetPort: 80
   type: NodePort
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wooless
+  name: kelompok1
   namespace: production
 spec:
   selector:
     matchLabels:
-      app: wooless
+      app: kelompok1
   strategy:
     type: RollingUpdate
-  template: #Template for container
+  template:
     metadata:
       labels:
-        app: wooless
+        app: kelompok1
     spec:
       containers:
-      - name: wooless
-        image:  asia.gcr.io/$PROJECT_ID/production/wooless:$SHORT_SHA
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 80
-          name: wooless
-        resources:
-          requests:
-            cpu: 50m
+        - name: kelompok1
+          image: asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: kelompok1
+          resources:
+            requests:
+              cpu: 50m
 
 ---
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: wooless
+  name: kelompok1
   namespace: production
 spec:
   maxReplicas: 25
@@ -60,38 +60,38 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: wooless
+    name: kelompok1
   targetCPUUtilizationPercentage: 100
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: wooless
+  name: kelompok1
   namespace: production
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: wooless
+    kubernetes.io/ingress.global-static-ip-name: kelompok1
     kubernetes.io/ingress.allow-http: "false"
-    networking.gke.io/managed-certificates: wooless
+    networking.gke.io/managed-certificates: kelompok1
 spec:
   rules:
-    - host: app.wooless.com
+    - host: app.kelompok1.com
       http:
         paths:
-        - path: /*
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: wooless
-              port: 
-                number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kelompok1
+                port:
+                  number: 80
 
 ---
 apiVersion: networking.gke.io/v1beta2
 kind: ManagedCertificate
 metadata:
-  name: wooless
+  name: kelompok1
   namespace: production
 spec:
   domains:
-    - app.wooless.com
+    - app.kelompok1.com

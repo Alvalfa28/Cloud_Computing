@@ -1,29 +1,59 @@
 steps:
-- id: Build-docker
-  name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia.gcr.io/$PROJECT_ID/production/wooless:$SHORT_SHA', '.']
-  timeout: 900s
+  # === STEP 0: Build Docker Image ===
+  - id: Build-docker
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - -t
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+      - .
+    timeout: 900s
 
-- id: Push-docker
-  name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'asia.gcr.io/$PROJECT_ID/production/wooless:$SHORT_SHA']
-  timeout: 900s
+  # === STEP 1: Push Docker Image ===
+  - id: Push-docker
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+    timeout: 900s
 
-- id: envSubst-for-deployment.yml
-  name: 'gcr.io/$PROJECT_ID/envsubst'
-  env:
-    - 'SHORT_SHA=$SHORT_SHA'
-    - 'PROJECT_ID=$PROJECT_ID'
-  args: ['deployment.yaml']
+  # === STEP 2: envsubst via shell ===
+  - id: envSubst-for-deployment.yml
+    name: "gcr.io/cloud-builders/gcloud"
+    entrypoint: "bash"
+    env:
+      - PROJECT_ID=$PROJECT_ID
+      - SHORT_SHA=$SHORT_SHA
+    args:
+      - "-c"
+      - |
+          echo "🔍 File deployment.yaml tersedia?"
+          ls -l
 
-- id: Deploy-to-GKE
-  name: "gcr.io/cloud-builders/gke-deploy" 
-  args:
-  - run
-  - --filename=deployment.yaml
-  - --cluster=wooless-production
-  - --location=asia-southeast2-a
-  timeout: 900s
+          echo "🔧 Sedang render deployment..."
+          envsubst < deployment.yaml > deployment_rendered.yaml
 
-# Global Timeout
-timeout: '3600s'
+          echo "📄 HASIL RENDER:"
+          echo "-----------------------------------------------"
+          cat deployment_rendered.yaml
+          echo "-----------------------------------------------"
+
+
+  # === STEP 3: Deploy to GKE ===
+  - id: Deploy-to-GKE
+    name: "gcr.io/cloud-builders/gke-deploy"
+    args:
+      - run
+      - --filename=deployment_rendered.yaml
+      - --cluster=clusterkelompok1
+      - --location=asia-southeast2-a
+    timeout: 900s
+
+# ===== KONFIGURASI GLOBAL =====
+
+timeout: "3600s"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+service_account: "SERVICE_ACCOUNT_KAMU@kelompok1-480205.iam.gserviceaccount.com"
