@@ -37,7 +37,7 @@ steps:
     args:
       - run
       - --filename=deployment_rendered.yaml
-      - --cluster=kelompok1-production
+      - --cluster=clusterkelompok1
       - --location=asia-southeast2-a
     timeout: 900s
 
