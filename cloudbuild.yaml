@@ -1,29 +1,39 @@
 steps:
-- id: Build-docker
-  name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia.gcr.io/$PROJECT_ID/production/wooless:$SHORT_SHA', '.']
-  timeout: 900s
+  - id: Build-docker
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'asia.gcr.io/$PROJECT_ID/production/kelompok1:$SHORT_SHA', '.']
+    timeout: 900s
 
-- id: Push-docker
-  name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'asia.gcr.io/$PROJECT_ID/production/wooless:$SHORT_SHA']
-  timeout: 900s
+  - id: Push-docker
+    name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia.gcr.io/$PROJECT_ID/production/kelompok1:$SHORT_SHA']
+    timeout: 900s
 
-- id: envSubst-for-deployment.yml
-  name: 'gcr.io/$PROJECT_ID/envsubst'
-  env:
-    - 'SHORT_SHA=$SHORT_SHA'
-    - 'PROJECT_ID=$PROJECT_ID'
-  args: ['deployment.yaml']
+  - id: envSubst-for-deployment.yml
+    # Menggunakan builder standar Google Cloud untuk envsubst
+    name: 'gcr.io/cloud-builders/envsubst' 
+    env:
+      - 'SHORT_SHA=$SHORT_SHA'
+      - 'PROJECT_ID=$PROJECT_ID'
+    # Args untuk menjalankan substitusi pada file deployment.yaml
+    args: ['deployment.yaml']
 
-- id: Deploy-to-GKE
-  name: "gcr.io/cloud-builders/gke-deploy" 
-  args:
-  - run
-  - --filename=deployment.yaml
-  - --cluster=wooless-production
-  - --location=asia-southeast2-a
-  timeout: 900s
+  - id: Deploy-to-GKE
+    name: "gcr.io/cloud-builders/gke-deploy"
+    args:
+      - run
+      - --filename=deployment.yaml
+      - --cluster=kelompok1-production
+      - --location=asia-southeast2-a
+    timeout: 900s
 
-# Global Timeout
+# Konfigurasi Global
 timeout: '3600s'
+
+# SOLUSI UNTUK ERROR LOGGING: Menggunakan Cloud Logging saja, 
+# yang mengatasi masalah perizinan logs_bucket saat service_account kustom digunakan.
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# AKUN LAYANAN KHUSUS (Pastikan izinnya sudah lengkap!)
+service_account: "SERVICE_ACCOUNT_KAMU@kelompok1-480205.iam.gserviceaccount.com"
