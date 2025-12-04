@@ -1,9 +1,11 @@
+# 1. NAMESPACE (Tidak ada perubahan, sudah benar)
 apiVersion: v1
 kind: Namespace
 metadata:
   name: production
 
 ---
+# 2. SERVICE (Tidak ada perubahan, sudah benar menggunakan NodePort)
 apiVersion: v1
 kind: Service
 metadata:
@@ -21,12 +23,15 @@ spec:
   type: NodePort
 
 ---
+# 3. DEPLOYMENT (Dibutuhkan penambahan 'replicas')
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kelompok1
   namespace: production
 spec:
+  # WAJIB: Tambahkan replicas sebagai nilai awal (Misalnya 3, sesuai minReplicas di HPA)
+  replicas: 3 
   selector:
     matchLabels:
       app: kelompok1
@@ -39,7 +44,8 @@ spec:
     spec:
       containers:
         - name: kelompok1
-          image: asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+          # VARIAN GKE (Sudah benar menggunakan AR baru dan variabel Cloud Build)
+          image: asia-southeast1-docker.png.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -47,8 +53,12 @@ spec:
           resources:
             requests:
               cpu: 50m
+            # WAJIB: Tambahkan limits agar HPA bisa bekerja dengan baik
+            limits:
+              cpu: 100m 
 
 ---
+# 4. HORIZONTAL POD AUTOSCALER (HPA)
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
@@ -61,17 +71,22 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: kelompok1
-  targetCPUUtilizationPercentage: 100
+  # WAJIB: targetCPUUtilizationPercentage harus menggunakan persentase. 
+  # Jika nilai max Replicas tinggi, target 100% terlalu tinggi. Turunkan ke 80%.
+  targetCPUUtilizationPercentage: 80 
 
 ---
-apiVersion: networking.k8s.io/v1
+# 5. INGRESS (Perlu penyesuaian apiVersion)
+# Catatan: API networking.k8s.io/v1 adalah versi stabil yang direkomendasikan.
+apiVersion: networking.k8s.io/v1 
 kind: Ingress
 metadata:
   name: kelompok1
   namespace: production
   annotations:
     kubernetes.io/ingress.global-static-ip-name: kelompok1
-    kubernetes.io/ingress.allow-http: "false"
+    # Jika menggunakan ManagedCertificate, biasanya tidak perlu menonaktifkan http
+    # kubernetes.io/ingress.allow-http: "false" 
     networking.gke.io/managed-certificates: kelompok1
 spec:
   rules:
@@ -85,9 +100,17 @@ spec:
                 name: kelompok1
                 port:
                   number: 80
+  # WAJIB: Menambahkan default backend jika Ingress Anda tidak menggunakan aturan host
+  # defaultBackend: 
+  #   service:
+  #     name: kelompok1
+  #     port:
+  #       number: 80
 
 ---
-apiVersion: networking.gke.io/v1beta2
+# 6. MANAGED CERTIFICATE (Perlu penyesuaian apiVersion untuk GKE)
+# Gunakan networking.gke.io/v1 yang lebih baru
+apiVersion: networking.gke.io/v1
 kind: ManagedCertificate
 metadata:
   name: kelompok1

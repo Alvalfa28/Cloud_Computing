@@ -5,7 +5,7 @@ steps:
     args:
       - build
       - -t
-      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+      - asia-southeast1-docker.png.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
       - .
     timeout: 900s
 
@@ -17,43 +17,38 @@ steps:
       - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
     timeout: 900s
 
-  # === STEP 2: envsubst via shell ===
+  # === STEP 2: envsubst untuk deployment.yaml ===
   - id: envSubst-for-deployment.yml
-    name: "gcr.io/cloud-builders/gcloud"
-    entrypoint: "bash"
+    # Menggunakan builder bash untuk memastikan output dialihkan
+    name: 'gcr.io/cloud-builders/bash' 
     env:
-      - PROJECT_ID=$PROJECT_ID
-      - SHORT_SHA=$SHORT_SHA
+      - 'SHORT_SHA=$SHORT_SHA'
+      - 'PROJECT_ID=$PROJECT_ID'
     args:
       - "-c"
       - |
-          echo "🔍 File deployment.yaml tersedia?"
-          ls -l
-
-          echo "🔧 Sedang render deployment..."
-          envsubst < deployment.yaml > deployment_rendered.yaml
-
-          echo "📄 HASIL RENDER:"
-          echo "-----------------------------------------------"
-          cat deployment_rendered.yaml
-          echo "-----------------------------------------------"
+        echo "Rendering deployment.yaml..."
+        export PROJECT_ID="$PROJECT_ID"
+        export SHORT_SHA="$SHORT_SHA"
+        envsubst < deployment.yaml > deployment_rendered.yaml
+        echo "====== deployment_rendered.yaml ======"
+        cat deployment_rendered.yaml
+        echo "====================================="
 
 
-  # === STEP 3: Deploy to GKE ===
+  # === STEP 3: Deploy ke GKE ===
   - id: Deploy-to-GKE
     name: "gcr.io/cloud-builders/gke-deploy"
     args:
       - run
-      - --filename=deployment_rendered.yaml
-      - --cluster=clusterkelompok1
-      - --location=asia-southeast2-a
+      - --filename=deployment_rendered.yaml # MENGGUNAKAN FILE OUTPUT DARI LANGKAH 2
+      - --cluster=kelompok1-production # Pastikan nama cluster benar
+      - --location=asia-southeast2-a # Pastikan lokasi cluster benar
     timeout: 900s
-
-# ===== KONFIGURASI GLOBAL =====
-
-timeout: "3600s"
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
+timeout: "3600s"
 
 service_account: "SERVICE_ACCOUNT_KAMU@kelompok1-480205.iam.gserviceaccount.com"
