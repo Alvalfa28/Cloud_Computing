@@ -25,10 +25,16 @@ steps:
       - 'SHORT_SHA=$SHORT_SHA'
       - 'PROJECT_ID=$PROJECT_ID'
     args:
-      - '-c'
+      - "-c"
       - |
-        # Perintah ini menjalankan substitusi dan menyimpan hasil ke file baru
-        /workspace/cloud-builders/envsubst < deployment.yaml > deployment_rendered.yaml
+        echo "Rendering deployment.yaml..."
+        export PROJECT_ID="$PROJECT_ID"
+        export SHORT_SHA="$SHORT_SHA"
+        envsubst < deployment.yaml > deployment_rendered.yaml
+        echo "====== deployment_rendered.yaml ======"
+        cat deployment_rendered.yaml
+        echo "====================================="
+
 
   # === STEP 3: Deploy ke GKE ===
   - id: Deploy-to-GKE
