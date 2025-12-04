@@ -17,29 +17,23 @@ steps:
       - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
     timeout: 900s
 
-  # === STEP 2: envsubst via shell ===
-  - id: envSubst-for-deployment.yml
+  # === STEP 2: envsubst untuk deployment.yaml ===
+  - id: envSubst-for-deployment
     name: "gcr.io/cloud-builders/gcloud"
     entrypoint: "bash"
-    env:
-      - PROJECT_ID=$PROJECT_ID
-      - SHORT_SHA=$SHORT_SHA
     args:
       - "-c"
       - |
-          echo "🔍 File deployment.yaml tersedia?"
-          ls -l
-
-          echo "🔧 Sedang render deployment..."
+          echo "🔧 Rendering deployment.yaml..."
+          export PROJECT_ID="$PROJECT_ID"
+          export SHORT_SHA="$SHORT_SHA"
           envsubst < deployment.yaml > deployment_rendered.yaml
-
-          echo "📄 HASIL RENDER:"
-          echo "-----------------------------------------------"
+          echo "✔ Selesai membuat deployment_rendered.yaml"
+          echo "====== OUTPUT ======"
           cat deployment_rendered.yaml
-          echo "-----------------------------------------------"
+          echo "===================="
 
-
-  # === STEP 3: Deploy to GKE ===
+  # === STEP 3: Deploy ke GKE ===
   - id: Deploy-to-GKE
     name: "gcr.io/cloud-builders/gke-deploy"
     args:
@@ -49,11 +43,9 @@ steps:
       - --location=asia-southeast2-a
     timeout: 900s
 
-# ===== KONFIGURASI GLOBAL =====
-
-timeout: "3600s"
-
 options:
   logging: CLOUD_LOGGING_ONLY
+
+timeout: "3600s"
 
 service_account: "SERVICE_ACCOUNT_KAMU@kelompok1-480205.iam.gserviceaccount.com"
