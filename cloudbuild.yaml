@@ -5,7 +5,7 @@ steps:
     args:
       - build
       - -t
-      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+      - asia-southeast1-docker.png.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
       - .
     timeout: 900s
 

@@ -45,7 +45,7 @@ spec:
       containers:
         - name: kelompok1
           # VARIAN GKE (Sudah benar menggunakan AR baru dan variabel Cloud Build)
-          image: asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+          image: asia-southeast1-docker.png.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
           imagePullPolicy: Always
           ports:
             - containerPort: 80
