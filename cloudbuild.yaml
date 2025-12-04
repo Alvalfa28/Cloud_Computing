@@ -1,29 +1,53 @@
 steps:
-- id: Build-docker
-  name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia.gcr.io/$PROJECT_ID/production/kelompok1:$SHORT_SHA', '.']
-  timeout: 900s
+  # === STEP 0: Build Docker Image ===
+  - id: Build-docker
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - -t
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+      - .
+    timeout: 900s
 
-- id: Push-docker
-  name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'asia.gcr.io/$PROJECT_ID/production/kelompok1:$SHORT_SHA']
-  timeout: 900s
+  # === STEP 1: Push Docker Image ===
+  - id: Push-docker
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/production/kelompok1:$SHORT_SHA
+    timeout: 900s
 
-- id: envSubst-for-deployment.yml
-  name: 'gcr.io/$PROJECT_ID/envsubst'
-  env:
-    - 'SHORT_SHA=$SHORT_SHA'
-    - 'PROJECT_ID=$PROJECT_ID'
-  args: ['deployment.yaml']
+  # === STEP 2: Render deployment.yaml dengan envsubst ===
+  - id: Envsubst-deployment
+    name: "gcr.io/cloud-builders/gcloud"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+          echo "🔧 Rendering deployment.yaml..."
+          export PROJECT_ID="$PROJECT_ID"
+          export SHORT_SHA="$SHORT_SHA"
+          envsubst < deployment.yaml > deployment_rendered.yaml
+          echo "====== deployment_rendered.yaml ======"
+          cat deployment_rendered.yaml
+          echo "====================================="
 
-- id: Deploy-to-GKE
-  name: "gcr.io/cloud-builders/gke-deploy" 
-  args:
-  - run
-  - --filename=deployment.yaml
-  - --cluster=clusterkelompok1
-  - --location=asia-southeast2-a
-  timeout: 900s
+  # === STEP 3: Deploy ke GKE ===
+  - id: Deploy-to-GKE
+    name: "gcr.io/cloud-builders/gke-deploy"
+    args:
+      - run
+      - --filename=deployment_rendered.yaml
+      - --cluster=clusterkelompok1
+      - --location=asia-southeast2-a
+    timeout: 900s
 
-# Global Timeout
-timeout: '3600s'
+# Global timeout
+timeout: "3600s"
+
+# Cloud logging saja
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Pastikan service account punya izin deploy GKE + push Docker
+service_account: "SERVICE_ACCOUNT_KAMU@kelompok1-480205.iam.gserviceaccount.com"

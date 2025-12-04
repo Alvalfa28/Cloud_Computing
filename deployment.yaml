@@ -15,9 +15,9 @@ spec:
   selector:
     app: kelompok1
   ports:
-  - port: 80
-    name: http
-    targetPort: 80
+    - port: 80
+      name: http
+      targetPort: 80
   type: NodePort
 
 ---
@@ -32,21 +32,21 @@ spec:
       app: kelompok1
   strategy:
     type: RollingUpdate
-  template: #Template for container
+  template:
     metadata:
       labels:
         app: kelompok1
     spec:
       containers:
-      - name: kelompok1
-        image:  asia.gcr.io/$PROJECT_ID/production/kelompok1:$SHORT_SHA
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 80
-          name: kelompok1
-        resources:
-          requests:
-            cpu: 50m
+        - name: kelompok1
+          image: asia-southeast1-docker.pkg.dev/${PROJECT_ID}/production/kelompok1:${SHORT_SHA}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: 50m
 
 ---
 apiVersion: autoscaling/v1
@@ -78,13 +78,13 @@ spec:
     - host: app.kelompok1.com
       http:
         paths:
-        - path: /*
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: kelompok1
-              port: 
-                number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kelompok1
+                port:
+                  number: 80
 
 ---
 apiVersion: networking.gke.io/v1beta2
