@@ -19,18 +19,17 @@ steps:
 
   # === STEP 2: Render deployment.yaml dengan envsubst ===
   - id: Envsubst-deployment
-    name: "gcr.io/cloud-builders/gcloud"
+    name: "gcr.io/cloud-builders/envsubst"
     entrypoint: "bash"
     args:
       - "-c"
       - |
           echo "🔧 Rendering deployment.yaml..."
-          export PROJECT_ID="$PROJECT_ID"
-          export SHORT_SHA="$SHORT_SHA"
           envsubst < deployment.yaml > deployment_rendered.yaml
           echo "====== deployment_rendered.yaml ======"
           cat deployment_rendered.yaml
           echo "====================================="
+
 
   # === STEP 3: Deploy ke GKE ===
   - id: Deploy-to-GKE
