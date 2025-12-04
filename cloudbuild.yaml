@@ -18,29 +18,26 @@ steps:
     timeout: 900s
 
   # === STEP 2: envsubst untuk deployment.yaml ===
-  - id: envSubst-for-deployment
-    name: "gcr.io/cloud-builders/gcloud"
-    entrypoint: "bash"
+  - id: envSubst-for-deployment.yml
+    # Menggunakan builder bash untuk memastikan output dialihkan
+    name: 'gcr.io/cloud-builders/bash' 
+    env:
+      - 'SHORT_SHA=$SHORT_SHA'
+      - 'PROJECT_ID=$PROJECT_ID'
     args:
-      - "-c"
+      - '-c'
       - |
-          echo "🔧 Rendering deployment.yaml..."
-          export PROJECT_ID="$PROJECT_ID"
-          export SHORT_SHA="$SHORT_SHA"
-          envsubst < deployment.yaml > deployment_rendered.yaml
-          echo "✔ Selesai membuat deployment_rendered.yaml"
-          echo "====== OUTPUT ======"
-          cat deployment_rendered.yaml
-          echo "===================="
+        # Perintah ini menjalankan substitusi dan menyimpan hasil ke file baru
+        /workspace/cloud-builders/envsubst < deployment.yaml > deployment_rendered.yaml
 
   # === STEP 3: Deploy ke GKE ===
   - id: Deploy-to-GKE
     name: "gcr.io/cloud-builders/gke-deploy"
     args:
       - run
-      - --filename=deployment_rendered.yaml
-      - --cluster=clusterkelompok1
-      - --location=asia-southeast2-a
+      - --filename=deployment_rendered.yaml # MENGGUNAKAN FILE OUTPUT DARI LANGKAH 2
+      - --cluster=kelompok1-production # Pastikan nama cluster benar
+      - --location=asia-southeast2-a # Pastikan lokasi cluster benar
     timeout: 900s
 
 options:
